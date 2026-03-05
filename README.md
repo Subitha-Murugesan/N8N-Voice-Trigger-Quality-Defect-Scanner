@@ -1,4 +1,4 @@
-# Voice n8n — Voice Trigger Quality Defect Scanner
+# Voice n8n - Voice Trigger Quality Defect Scanner
 
 ## Overview
 
