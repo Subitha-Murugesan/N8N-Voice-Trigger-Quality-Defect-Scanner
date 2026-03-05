@@ -13,6 +13,12 @@ The response can include:
 * Automated workflow actions
 * Text or voice responses returned to the frontend
 
+<img width="1" height="1" alt="image" src="https://github.com/user-attachments/assets/182a5038-c84f-4b46-8eb5-5d8c25127959" />
+<img width="664" height="891" alt="image" src="https://github.com/user-attachments/assets/0bf5229b-1420-4f50-91ab-2b5cb4e30062" />
+
+<img width="744" height="564" alt="image" src="https://github.com/user-attachments/assets/7cd27d4e-38d3-4302-a383-47c44307d768" />
+<img width="703" height="234" alt="image" src="https://github.com/user-attachments/assets/1db7c930-2027-4011-9a48-c952526f26ea" />
+
 ---
 
 # n8n Workflow Role
