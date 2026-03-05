@@ -1,0 +1,129 @@
+{
+    "name": "Voice Trigger – Quality Defect Scanner (Local)",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "voice-quality-scan",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "Webhook",
+        "name": "Voice Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [200, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.voice_text }}",
+                "operation": "contains",
+                "value2": "quality"
+              }
+            ]
+          }
+        },
+        "id": "IF",
+        "name": "Validate Voice Intent",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [400, 300]
+      },
+      {
+        "parameters": {
+          "values": {
+            "string": [
+              {
+                "name": "status",
+                "value": "HIGH_SEVERITY_DEFECT"
+              },
+              {
+                "name": "product",
+                "value": "Widget-X"
+              },
+              {
+                "name": "message",
+                "value": "High severity quality defect detected for Widget-X. Immediate action recommended."
+              }
+            ]
+          }
+        },
+        "id": "Set",
+        "name": "Simulated Defect Analysis",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 2,
+        "position": [600, 250]
+      },
+      {
+        "parameters": {
+          "responseBody": "={\n  \"status\": $json.status,\n  \"product\": $json.product,\n  \"message\": $json.message\n}",
+          "responseCode": 200
+        },
+        "id": "Respond",
+        "name": "Respond to Voice UI",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [800, 250]
+      },
+      {
+        "parameters": {
+          "responseBody": "{\n  \"status\": \"IGNORED\",\n  \"message\": \"Voice command not related to quality scanning\"\n}",
+          "responseCode": 200
+        },
+        "id": "RespondIgnored",
+        "name": "Respond – Invalid Intent",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [600, 400]
+      }
+    ],
+    "connections": {
+      "Voice Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validate Voice Intent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Voice Intent": {
+        "main": [
+          [
+            {
+              "node": "Simulated Defect Analysis",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond – Invalid Intent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simulated Defect Analysis": {
+        "main": [
+          [
+            {
+              "node": "Respond to Voice UI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": true,
+    "settings": {},
+    "versionId": "1"
+  }
+  

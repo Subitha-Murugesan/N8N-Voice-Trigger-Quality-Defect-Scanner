@@ -1,0 +1,109 @@
+{
+    "name": "Automatic Quality Defect Alerting",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "voice-quality-scan",
+          "responseMode": "lastNode"
+        },
+        "id": "Webhook",
+        "name": "Quality Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [200, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "// Data Source 1: Manufacturing defects\nconst manufacturing = [\n  { product: \"Widget-X\", defect: \"Crack\", previous: 18, current: 42 },\n  { product: \"Widget-Y\", defect: \"Misalignment\", previous: 6, current: 9 }\n];\n\n// Data Source 2: Customer complaints\nconst complaints = [\n  { product: \"Widget-X\", complaints: 27 },\n  { product: \"Widget-Y\", complaints: 4 }\n];\n\nreturn [{ manufacturing, complaints }];"
+        },
+        "id": "DataSources",
+        "name": "Collect Quality Data",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [420, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "const results = [];\n\nfor (const item of items[0].json.manufacturing) {\n  const complaint = items[0].json.complaints.find(c => c.product === item.product);\n\n  const defectIncrease = item.current - item.previous;\n  const defectIncreasePct = (defectIncrease / item.previous) * 100;\n\n  let severity = \"LOW\";\n  if (defectIncreasePct > 50 || (complaint && complaint.complaints > 20)) {\n    severity = \"HIGH\";\n  } else if (defectIncreasePct > 20) {\n    severity = \"MEDIUM\";\n  }\n\n  if (severity !== \"LOW\") {\n    results.push({\n      product: item.product,\n      defect: item.defect,\n      previous_defects: item.previous,\n      current_defects: item.current,\n      complaints: complaint ? complaint.complaints : 0,\n      severity\n    });\n  }\n}\n\nreturn results.map(r => ({ json: r }));"
+        },
+        "id": "Analysis",
+        "name": "Detect Emerging Defects",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [660, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.severity }}",
+                "operation": "notEqual",
+                "value2": "LOW"
+              }
+            ]
+          }
+        },
+        "id": "Decision",
+        "name": "Is Alert Required?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [900, 300]
+      },
+      {
+        "parameters": {
+          "functionCode": "const alerts = items.map(i =>\n  `Product ${i.json.product} shows emerging quality issues. Defect: ${i.json.defect}. Severity: ${i.json.severity}.`\n);\n\nreturn [{\n  json: {\n    message: alerts.join(\" \"),\n    voice_response: alerts.join(\" \"),\n    alert_count: alerts.length\n  }\n}];"
+        },
+        "id": "AlertBuilder",
+        "name": "Build Alert Message",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [1140, 250]
+      },
+      {
+        "parameters": {
+          "responseBody": "={{ $json }}",
+          "responseCode": 200
+        },
+        "id": "Respond",
+        "name": "Respond to Trigger",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [1360, 250]
+      },
+      {
+        "parameters": {
+          "responseBody": "{ \"message\": \"No emerging quality defects detected.\", \"voice_response\": \"No quality issues detected.\" }",
+          "responseCode": 200
+        },
+        "id": "NoAlert",
+        "name": "No Issues Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [1140, 420]
+      }
+    ],
+    "connections": {
+      "Quality Trigger": {
+        "main": [[{ "node": "Collect Quality Data", "type": "main", "index": 0 }]]
+      },
+      "Collect Quality Data": {
+        "main": [[{ "node": "Detect Emerging Defects", "type": "main", "index": 0 }]]
+      },
+      "Detect Emerging Defects": {
+        "main": [[{ "node": "Is Alert Required?", "type": "main", "index": 0 }]]
+      },
+      "Is Alert Required?": {
+        "main": [
+          [{ "node": "Build Alert Message", "type": "main", "index": 0 }],
+          [{ "node": "No Issues Response", "type": "main", "index": 0 }]
+        ]
+      },
+      "Build Alert Message": {
+        "main": [[{ "node": "Respond to Trigger", "type": "main", "index": 0 }]]
+      }
+    },
+    "active": true
+  }
+  
